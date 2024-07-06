@@ -1,18 +1,25 @@
 from pydantic import BaseModel
+from typing import Optional
+from fastapi import UploadFile
 
 
-class UserBase(BaseModel):
-    name: str
-    chat_id: str
-
-
-class UserCreate(UserBase):
+class MemeBase(BaseModel):
     pass
 
 
-class User(UserBase):
+class MemeCreate(MemeBase):
+    title: str
+
+
+class MemeUpdate(MemeBase):
+    is_active: Optional[bool] = None
+    title: Optional[str] = None
+
+class Meme(MemeBase):
     id: int
-    is_active: bool
+    is_active: bool = True
+    image: str
+    title: str
 
     class Config:
         orm_mode = True

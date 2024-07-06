@@ -1,36 +1,50 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, Form
 from sqlalchemy.orm import Session
 
 import memes_app.schemas as schemas
 import memes_app.crud as crud
-from memes_app.models.meme import Meme 
 from memes_app.api.deps import get_db
 
 
 router = APIRouter()
 
-@router.get("/", response_model=list[schemas.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return {'ok'}
-    #users = crud.get_users(db, skip=skip, limit=limit)
-    #return users
 
-'''
+@router.get("/", response_model=list[schemas.Meme])
+def read_memes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    memes = crud.get_memes(db, skip=skip, limit=limit)
+    return memes
+
+
+@router.get("/{id}", response_model=schemas.Meme)
+def read_meme(id: int, db: Session = Depends(get_db)):
+    db_meme = crud.get_meme(db, meme_id=id)
+    if db_meme is None:
+        raise HTTPException(status_code=404, detail="Meme not found")
+    return db_meme
+
+
 @router.post("/", response_model=schemas.Meme)
 def create_meme(
-    user: schemas.UserCreate,
+    file: UploadFile,
+    title: str = Form(...),
     db: Session = Depends(get_db),
-    valid_user: schemas.UserCreate = Depends(verify_user_not_exists),
 ):
-    return crud.create_user(db=db, user=valid_user)
+    meme_data = schemas.MemeCreate(title=title)
+    print("Received file:", file.filename)
+    return crud.create_meme(db=db, meme=meme_data, filename=file.filename)
 
 
+@router.delete("/{id}", response_model=schemas.Meme)
+def delete_meme(id: int, db: Session = Depends(get_db)):
+    db_meme = crud.get_meme(db, meme_id=id)
+    if db_meme is None:
+        raise HTTPException(status_code=404, detail="Meme not found")
+    return crud.delete_meme(db, meme_id=id)
 
-@router.get("/{user_id}", response_model=schemas.User)
-def read_user(
-    user_id: int,
-    db: Session = Depends(get_db),
-    existing_user: User = Depends(get_user_by_id),
-):
-    return existing_user
-'''
+
+@router.put("/{id}", response_model=schemas.Meme)
+def update_meme(id: int, meme: schemas.MemeUpdate, db: Session = Depends(get_db)):
+    db_meme = crud.get_meme(db, meme_id=id)
+    if db_meme is None:
+        raise HTTPException(status_code=404, detail="Meme not found")
+    return crud.update_meme(db, meme_id=id, meme=meme)

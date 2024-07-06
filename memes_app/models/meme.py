@@ -8,4 +8,4 @@ class Meme(Base):
 
     id = Column(Integer, primary_key=True)
     title = Column(String, unique=True, index=True)
-    picture = Column(String, unique=True, index=True)
+    image = Column(String, unique=True, index=True)
